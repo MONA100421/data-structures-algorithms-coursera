@@ -44,5 +44,3 @@ It showcases:
 
 ## ✨ Why This Matters
 Show my commitment to strengthening algorithmic thinking and software engineering fundamentals while pursuing my M.S. in Spatial Data Science at USC.
-
----
