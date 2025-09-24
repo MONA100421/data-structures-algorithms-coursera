@@ -1,31 +1,35 @@
 # python3
-
+import sys
+import heapq
 from collections import namedtuple
 
 AssignedJob = namedtuple("AssignedJob", ["worker", "started_at"])
 
 
 def assign_jobs(n_workers, jobs):
-    # TODO: replace this code with a faster algorithm.
-    result = []
-    next_free_time = [0] * n_workers
-    for job in jobs:
-        next_worker = min(range(n_workers), key=lambda w: next_free_time[w])
-        result.append(AssignedJob(next_worker, next_free_time[next_worker]))
-        next_free_time[next_worker] += job
+    # (next_free_time, worker_id)
+    pq = [(0, w) for w in range(n_workers)]
+    heapq.heapify(pq)
 
+    result = []
+    for duration in jobs:
+        free_time, wid = heapq.heappop(pq)
+        result.append(AssignedJob(wid, free_time))
+        heapq.heappush(pq, (free_time + duration, wid))
     return result
 
 
 def main():
-    n_workers, n_jobs = map(int, input().split())
-    jobs = list(map(int, input().split()))
+    data = list(map(int, sys.stdin.read().split()))
+    n_workers, n_jobs = data[0], data[1]
+    jobs = data[2:]
     assert len(jobs) == n_jobs
 
     assigned_jobs = assign_jobs(n_workers, jobs)
-
+    out_lines = []
     for job in assigned_jobs:
-        print(job.worker, job.started_at)
+        out_lines.append(f"{job.worker} {job.started_at}")
+    sys.stdout.write("\n".join(out_lines))
 
 
 if __name__ == "__main__":
