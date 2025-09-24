@@ -1,18 +1,29 @@
 # python3
+from collections import deque
 
 
-def max_sliding_window_naive(sequence, m):
-    maximums = []
-    for i in range(len(sequence) - m + 1):
-        maximums.append(max(sequence[i:i + m]))
+def max_sliding_window(sequence, m):
+    dq = deque()    # store indices; sequence[dq] is decreasing
+    ans = []
 
-    return maximums
+    for i, x in enumerate(sequence):
+        while dq and sequence[dq[-1]] <= x:
+            dq.pop()
+
+        dq.append(i)
+
+        if dq[0] <= i - m:
+            dq.popleft()
+
+        if i >= m - 1:
+            ans.append(sequence[dq[0]])
+
+    return ans
+
 
 if __name__ == '__main__':
     n = int(input())
-    input_sequence = [int(i) for i in input().split()]
-    assert len(input_sequence) == n
-    window_size = int(input())
-
-    print(*max_sliding_window_naive(input_sequence, window_size))
-
+    seq = [int(i) for i in input().split()]
+    assert len(seq) == n
+    m = int(input())
+    print(*max_sliding_window(seq, m))

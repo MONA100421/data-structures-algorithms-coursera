@@ -1,5 +1,4 @@
 # python3
-
 from collections import namedtuple
 
 Bracket = namedtuple("Bracket", ["char", "position"])
@@ -10,21 +9,26 @@ def are_matching(left, right):
 
 
 def find_mismatch(text):
-    opening_brackets_stack = []
-    for i, next in enumerate(text):
-        if next in "([{":
-            # Process opening bracket, write your code here
-            pass
+    stack = []  # keep Bracket(char, position) ; position is 1-based
+    for pos, ch in enumerate(text, 1):
+        if ch in "([{":
+            stack.append(Bracket(ch, pos))
+        elif ch in ")]}":
+            if not stack:
+                return pos
+            top = stack.pop()
+            if not are_matching(top.char, ch):
+                return pos
 
-        if next in ")]}":
-            # Process closing bracket, write your code here
-            pass
+    if stack:
+        return stack[0].position
+
+    return "Success"
 
 
 def main():
-    text = input()
-    mismatch = find_mismatch(text)
-    # Printing answer, write your code here
+    text = input().rstrip()
+    print(find_mismatch(text))
 
 
 if __name__ == "__main__":
