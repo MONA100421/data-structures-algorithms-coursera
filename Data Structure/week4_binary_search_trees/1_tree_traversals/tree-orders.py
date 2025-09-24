@@ -1,47 +1,76 @@
-# python3
+import sys
 
-import sys, threading
-sys.setrecursionlimit(10**6) # max depth of recursion
-threading.stack_size(2**27)  # new thread will get stack of such size
+def read_tree():
+    data = sys.stdin.read().strip().split()
+    if not data:
+        return 0, [], [], []
+    it = iter(data)
+    n = int(next(it))
+    keys = [0]*n
+    left = [0]*n
+    right = [0]*n
+    for i in range(n):
+        keys[i] = int(next(it)); left[i] = int(next(it)); right[i] = int(next(it))
+    return n, keys, left, right
 
-class TreeOrders:
-  def read(self):
-    self.n = int(sys.stdin.readline())
-    self.key = [0 for i in range(self.n)]
-    self.left = [0 for i in range(self.n)]
-    self.right = [0 for i in range(self.n)]
-    for i in range(self.n):
-      [a, b, c] = map(int, sys.stdin.readline().split())
-      self.key[i] = a
-      self.left[i] = b
-      self.right[i] = c
+def inorder(n, keys, left, right):
+    if n == 0:
+        return []
+    res = []
+    stack = []
+    cur = 0
+    while stack or cur != -1:
+        while cur != -1:
+            stack.append(cur)
+            cur = left[cur]
+        cur = stack.pop()
+        res.append(keys[cur])
+        cur = right[cur]
+    return res
 
-  def inOrder(self):
-    self.result = []
-    # Finish the implementation
-    # You may need to add a new recursive method to do that
-                
-    return self.result
+def preorder(n, keys, left, right):
+    if n == 0:
+        return []
+    res = []
+    stack = [0]
+    while stack:
+        v = stack.pop()
+        res.append(keys[v])
+        r = right[v]
+        l = left[v]
+        if r != -1:
+            stack.append(r)
+        if l != -1:
+            stack.append(l)
+    return res
 
-  def preOrder(self):
-    self.result = []
-    # Finish the implementation
-    # You may need to add a new recursive method to do that
-                
-    return self.result
-
-  def postOrder(self):
-    self.result = []
-    # Finish the implementation
-    # You may need to add a new recursive method to do that
-                
-    return self.result
+def postorder(n, keys, left, right):
+    if n == 0:
+        return []
+    res = []
+    stack = []
+    cur = 0
+    last = -1
+    while stack or cur != -1:
+        if cur != -1:
+            stack.append(cur)
+            cur = left[cur]
+        else:
+            peek = stack[-1]
+            r = right[peek]
+            if r != -1 and last != r:
+                cur = r
+            else:
+                res.append(keys[peek])
+                last = stack.pop()
+    return res
 
 def main():
-	tree = TreeOrders()
-	tree.read()
-	print(" ".join(str(x) for x in tree.inOrder()))
-	print(" ".join(str(x) for x in tree.preOrder()))
-	print(" ".join(str(x) for x in tree.postOrder()))
+    n, keys, left, right = read_tree()
+    sys.setrecursionlimit(1 << 25)
+    print(*inorder(n, keys, left, right))
+    print(*preorder(n, keys, left, right))
+    print(*postorder(n, keys, left, right))
 
-threading.Thread(target=main).start()
+if __name__ == "__main__":
+    main()
