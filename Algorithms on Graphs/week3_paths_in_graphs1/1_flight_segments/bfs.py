@@ -1,10 +1,24 @@
-#Uses python3
+# Uses python3
 
 import sys
 import queue
+from collections import deque
 
 def distance(adj, s, t):
-    #write your code here
+    n = len(adj)
+    dist = [-1] * n
+    dist[s] = 0
+    q = deque([s])
+
+    while q:
+        u = q.popleft()
+        if u == t:
+            return dist[u]
+        for v in adj[u]:
+            if dist[v] == -1:
+                dist[v] = dist[u] + 1
+                q.append(v)
+
     return -1
 
 if __name__ == '__main__':
