@@ -1,56 +1,63 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-# A* search on a directed graph with coordinates
 import sys, math, heapq
-sys.setrecursionlimit(10**7)
 
-def astar(n, adj, cost, x, y, s, t):
-    # zero-based s,t
+INF = 10**18
+
+def astar(n, coords, adj, s, t):
     if s == t:
         return 0
-    # Potential: straight-line distance to t
+    # heuristic: straight-line distance
     def h(u):
-        dx = x[u]-x[t]; dy = y[u]-y[t]
-        return math.hypot(dx,dy)
-    INF = 10**18
-    dist = [INF]*n
-    visited = [False]*n
-    pq = []
+        x1, y1 = coords[u]
+        x2, y2 = coords[t]
+        return math.hypot(x1 - x2, y1 - y2)
+
+    dist = [INF] * n
+    used = [False] * n
     dist[s] = 0
-    heapq.heappush(pq,(h(s), s))
+    pq = [(h(s), s)]  # (f = g + h, node)
+
     while pq:
-        _, u = heapq.heappop(pq)
-        if visited[u]:
+        f, u = heapq.heappop(pq)
+        if used[u]:
             continue
-        visited[u] = True
+        used[u] = True
         if u == t:
             return dist[u]
-        du = dist[u]
-        for i,v in enumerate(adj[u]):
-            w = cost[u][i]
-            if dist[v] > du + w:
-                dist[v] = du + w
-                heapq.heappush(pq, (dist[v] + h(v), v))
+        for v, w in adj[u]:
+            nd = dist[u] + w
+            if nd < dist[v]:
+                dist[v] = nd
+                heapq.heappush(pq, (nd + h(v), v))
     return -1
 
 def main():
     data = sys.stdin.read().strip().split()
     if not data:
         return
-    it = iter(map(int, data))
-    n = next(it); m = next(it)
-    x = [0]*n; y=[0]*n
-    for i in range(n):
-        x[i]=next(it); y[i]=next(it)
-    adj=[[] for _ in range(n)]; cost=[[] for _ in range(n)]
+    it = iter(data)
+    n = int(next(it)); m = int(next(it))
+    coords = []
+    for _ in range(n):
+        x = float(next(it)); y = float(next(it))
+        coords.append((x, y))
+    adj = [[] for _ in range(n)]
     for _ in range(m):
-        u=next(it)-1; v=next(it)-1; w=next(it)
-        adj[u].append(v); cost[u].append(w)
-    q = next(it)
-    out=[]
+        u = int(next(it)) - 1
+        v = int(next(it)) - 1
+        w = int(next(it))
+        if 0 <= u < n and 0 <= v < n:
+            adj[u].append((v, w))
+    q = int(next(it))
+    out = []
     for _ in range(q):
-        s=next(it)-1; t=next(it)-1
-        out.append(str(astar(n,adj,cost,x,y,s,t)))
+        s = int(next(it)) - 1
+        t = int(next(it)) - 1
+        ans = astar(n, coords, adj, s, t)
+        out.append(str(ans if ans != -1 and ans < INF // 2 else -1))
     sys.stdout.write("\n".join(out))
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()

@@ -1,60 +1,83 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-# Same interface as preprocess_large; we still use bidirectional Dijkstra.
 import sys, heapq
-sys.setrecursionlimit(10**7)
 
-def bidir_dijkstra(n, adj, rev, s, t):
-    if s==t: return 0
-    INF=10**18
-    distF=[INF]*n; distB=[INF]*n
-    procF=[False]*n; procB=[False]*n
-    distF[s]=0; distB[t]=0
-    qF=[(0,s)]; qB=[(0,t)]
-    best=INF
-    while qF or qB:
-        if qF:
-            d,u=heapq.heappop(qF)
-            if d==distF[u]:
-                procF[u]=True
-                if procB[u]: best=min(best, distF[u]+distB[u])
-                for v,w in adj[u]:
-                    nd=d+w
-                    if nd<distF[v]:
-                        distF[v]=nd; heapq.heappush(qF,(nd,v))
-        if qB:
-            d,u=heapq.heappop(qB)
-            if d==distB[u]:
-                procB[u]=True
-                if procF[u]: best=min(best, distF[u]+distB[u])
-                for v,w in rev[u]:
-                    nd=d+w
-                    if nd<distB[v]:
-                        distB[v]=nd; heapq.heappush(qB,(nd,v))
-        if best<10**18:
-            # stop if min remaining distances can't beat best
-            minF = qF[0][0] if qF else 10**18
-            minB = qB[0][0] if qB else 10**18
-            if minF + minB >= best:
-                break
-    return -1 if best==INF else best
+INF = 10**18
+
+def bidir_dijkstra(n, adj, radj, s, t):
+    if s == t:
+        return 0
+    dist_f = [INF] * n
+    dist_b = [INF] * n
+    vis_f = [False] * n
+    vis_b = [False] * n
+    pqf, pqb = [], []
+    dist_f[s] = 0
+    dist_b[t] = 0
+    heapq.heappush(pqf, (0, s))
+    heapq.heappush(pqb, (0, t))
+    best = INF
+
+    while pqf or pqb:
+        if pqf:
+            df, u = heapq.heappop(pqf)
+            if df == dist_f[u] and not vis_f[u]:
+                vis_f[u] = True
+                if vis_b[u]:
+                    best = min(best, dist_f[u] + dist_b[u])
+                for v, w in adj[u]:
+                    nd = df + w
+                    if nd < dist_f[v]:
+                        dist_f[v] = nd
+                        heapq.heappush(pqf, (nd, v))
+
+        if pqb:
+            db, u = heapq.heappop(pqb)
+            if db == dist_b[u] and not vis_b[u]:
+                vis_b[u] = True
+                if vis_f[u]:
+                    best = min(best, dist_f[u] + dist_b[u])
+                for v, w in radj[u]:
+                    nd = db + w
+                    if nd < dist_b[v]:
+                        dist_b[v] = nd
+                        heapq.heappush(pqb, (nd, v))
+
+        if pqf and pqb and best < INF and pqf[0][0] + pqb[0][0] >= best:
+            break
+
+    return -1 if best >= INF else best
 
 def main():
     data = sys.stdin.read().strip().split()
     if not data:
         return
-    it = iter(map(int,data))
-    n=next(it); m=next(it)
-    adj=[[] for _ in range(n)]; rev=[[] for _ in range(n)]
+    it = iter(data)
+    n = int(next(it)); m = int(next(it))
+    adj = [[] for _ in range(n)]
+    radj = [[] for _ in range(n)]
     for _ in range(m):
-        u=next(it)-1; v=next(it)-1; w=next(it)
-        adj[u].append((v,w)); rev[v].append((u,w))
-    print("Ready")
-    q=next(it)
-    out=[]
+        u = int(next(it)) - 1
+        v = int(next(it)) - 1
+        w = int(next(it))
+        if 0 <= u < n and 0 <= v < n:
+            adj[u].append((v, w))
+            radj[v].append((u, w))
+
+    sys.stdout.write("Ready\n")
+    sys.stdout.flush()
+
+    out = []
+    try:
+        q = int(next(it))
+    except StopIteration:
+        q = 0
     for _ in range(q):
-        s=next(it)-1; t=next(it)-1
-        out.append(str(bidir_dijkstra(n,adj,rev,s,t)))
+        s = int(next(it)) - 1
+        t = int(next(it)) - 1
+        out.append(str(bidir_dijkstra(n, adj, radj, s, t)))
     sys.stdout.write("\n".join(out))
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()

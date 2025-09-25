@@ -1,69 +1,89 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-# Distance queries with "preprocess" for small graph.
-# We implement bidirectional Dijkstra (no CH). Matches the I/O expected by grader:
-# - read n m
-# - m lines: u v w (1-based)
-# - print "Ready"
-# - read q
-# - then q lines of s t (1-based); print distance or -1 each line
 import sys, heapq
-sys.setrecursionlimit(10**7)
 
-def bidir_dijkstra(n, adj, rev, s, t):
+INF = 10**18
+
+def bidir_dijkstra(n, adj, radj, s, t):
     if s == t:
         return 0
-    INF=10**18
-    distF=[INF]*n; distB=[INF]*n
-    procF=[False]*n; procB=[False]*n
-    distF[s]=0; distB[t]=0
-    qF=[(0,s)]; qB=[(0,t)]
-    best=INF
-    while qF or qB:
-        if qF:
-            d,u=heapq.heappop(qF)
-            if d!=distF[u]: pass
+    dist_f = [INF] * n
+    dist_b = [INF] * n
+    vis_f = [False] * n
+    vis_b = [False] * n
+    pqf = []
+    pqb = []
+    dist_f[s] = 0
+    dist_b[t] = 0
+    heapq.heappush(pqf, (0, s))
+    heapq.heappush(pqb, (0, t))
+    best = INF
+
+    while pqf or pqb:
+        if pqf:
+            df, u = heapq.heappop(pqf)
+            if df != dist_f[u]:
+                pass
             else:
-                procF[u]=True
-                if procB[u]:
-                    best=min(best, distF[u]+distB[u])
-                for v,w in adj[u]:
-                    if distF[v]>d+w:
-                        distF[v]=d+w; heapq.heappush(qF,(distF[v],v))
-        if qB:
-            d,u=heapq.heappop(qB)
-            if d!=distB[u]: pass
+                if df <= best and not vis_f[u]:
+                    vis_f[u] = True
+                    if vis_b[u]:
+                        best = min(best, dist_f[u] + dist_b[u])
+                    for v, w in adj[u]:
+                        nd = df + w
+                        if nd < dist_f[v]:
+                            dist_f[v] = nd
+                            heapq.heappush(pqf, (nd, v))
+        if pqb:
+            db, u = heapq.heappop(pqb)
+            if db != dist_b[u]:
+                pass
             else:
-                procB[u]=True
-                if procF[u]:
-                    best=min(best, distF[u]+distB[u])
-                for v,w in rev[u]:
-                    if distB[v]>d+w:
-                        distB[v]=d+w; heapq.heappush(qB,(distB[v],v))
-        # early stop
-        if qF and qB and qF[0][0]+qB[0][0] >= best:
-            break
-    return -1 if best==INF else best
+                if db <= best and not vis_b[u]:
+                    vis_b[u] = True
+                    if vis_f[u]:
+                        best = min(best, dist_f[u] + dist_b[u])
+                    for v, w in radj[u]:
+                        nd = db + w
+                        if nd < dist_b[v]:
+                            dist_b[v] = nd
+                            heapq.heappush(pqb, (nd, v))
+        if pqf and pqb and best < INF:
+            if pqf[0][0] + pqb[0][0] >= best:
+                break
+
+    return -1 if best >= INF else best
 
 def main():
     data = sys.stdin.read().strip().split()
     if not data:
         return
-    it = iter(map(int,data))
-    n = next(it); m = next(it)
-    adj=[[] for _ in range(n)]
-    rev=[[] for _ in range(n)]
+    it = iter(data)
+    n = int(next(it)); m = int(next(it))
+    adj = [[] for _ in range(n)]
+    radj = [[] for _ in range(n)]
     for _ in range(m):
-        u=next(it)-1; v=next(it)-1; w=next(it)
-        adj[u].append((v,w))
-        rev[v].append((u,w))
-    # Print "Ready" as the grader expects after preprocessing
-    print("Ready")
-    q = next(it)
-    out=[]
+        u = int(next(it)) - 1
+        v = int(next(it)) - 1
+        w = int(next(it))
+        if 0 <= u < n and 0 <= v < n:
+            adj[u].append((v, w))
+            radj[v].append((u, w))
+
+    sys.stdout.write("Ready\n")
+    sys.stdout.flush()
+
+    out = []
+    try:
+        q = int(next(it))
+    except StopIteration:
+        q = 0
     for _ in range(q):
-        s=next(it)-1; t=next(it)-1
-        out.append(str(bidir_dijkstra(n, adj, rev, s, t)))
+        s = int(next(it)) - 1
+        t = int(next(it)) - 1
+        out.append(str(bidir_dijkstra(n, adj, radj, s, t)))
     sys.stdout.write("\n".join(out))
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()
