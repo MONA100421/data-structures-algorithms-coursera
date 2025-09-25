@@ -1,13 +1,34 @@
-#Uses python3
-
+# Uses python3
 import sys
-import queue
 
+def negative_cycle(adj, cost):
+    n = len(adj)
+    INF = 10**18
 
-def distance(adj, cost, s, t):
-    #write your code here
-    return -1
+    # super source: initialize all distances to 0
+    dist = [0] * n
 
+    # flatten edges
+    edges = []
+    for u in range(n):
+        for i, v in enumerate(adj[u]):
+            edges.append((u, v, cost[u][i]))
+
+    # n-1 relaxations
+    for _ in range(n - 1):
+        changed = False
+        for u, v, w in edges:
+            if dist[v] > dist[u] + w:
+                dist[v] = max(-INF, dist[u] + w)
+                changed = True
+        if not changed:
+            break
+
+    # one more pass: if anything can still be relaxed -> negative cycle exists
+    for u, v, w in edges:
+        if dist[v] > dist[u] + w:
+            return 1
+    return 0
 
 if __name__ == '__main__':
     input = sys.stdin.read()
@@ -21,5 +42,4 @@ if __name__ == '__main__':
     for ((a, b), w) in edges:
         adj[a - 1].append(b - 1)
         cost[a - 1].append(w)
-    s, t = data[0] - 1, data[1] - 1
-    print(distance(adj, cost, s, t))
+    print(negative_cycle(adj, cost))
