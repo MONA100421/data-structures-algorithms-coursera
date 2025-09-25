@@ -1,33 +1,37 @@
 # python3
+import sys
+from collections import deque
 
-# Arguments:
-#   * `n` - the number of vertices.
-#   * `edges` - list of edges, each edge is a tuple (u, v), 1 <= u, v <= n.
-#   * `colors` - list consisting of `n` characters, each belonging to the set {'R', 'G', 'B'}.
-# Return value: 
-#   * If there exists a proper recoloring, return value is a list containing new colors, similar to the `colors` argument.
-#   * Otherwise, return value is None.
-def assign_new_colors(n, edges, colors):
-    # Insert your code here.
-    if n % 3 == 0:
-        new_colors = []
-        for i in range(n):
-            new_colors[i].append("RGB"[i % 3])
-        return new_colors
-    else:
-        return None
-    
+def reschedule_exams(n, edges):
+    graph = [[] for _ in range(n)]
+    for a, b in edges:
+        a -= 1; b -= 1
+        graph[a].append(b)
+        graph[b].append(a)
+
+    color = [-1]*n
+    for start in range(n):
+        if color[start] == -1:
+            color[start] = 0
+            q = deque([start])
+            while q:
+                v = q.popleft()
+                for u in graph[v]:
+                    if color[u] == -1:
+                        color[u] = 1 - color[v]
+                        q.append(u)
+                    elif color[u] == color[v]:
+                        return None
+    return color
+
 def main():
-    n, m = map(int, input().split())
-    colors = input().split()
-    edges = []
-    for i in range(m):
-        u, v = map(int, input().split())
-        edges.append((u, v))
-    new_colors = assign_new_colors(n, edges, colors)
-    if new_colors is None:
-        print("Impossible")
+    n, m = map(int, sys.stdin.readline().split())
+    edges = [tuple(map(int, sys.stdin.readline().split())) for _ in range(m)]
+    result = reschedule_exams(n, edges)
+    if result is None:
+        print("IMPOSSIBLE")
     else:
-        print(''.join(new_colors))
+        print(" ".join(str(x+1) for x in result))
 
-main()
+if __name__ == "__main__":
+    main()

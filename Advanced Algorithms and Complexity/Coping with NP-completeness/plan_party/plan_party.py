@@ -1,53 +1,47 @@
-#uses python3
-
+# python3
 import sys
-import threading
+sys.setrecursionlimit(10**7)
 
-# This code is used to avoid stack overflow issues
-sys.setrecursionlimit(10**6) # max depth of recursion
-threading.stack_size(2**26)  # new thread will get stack of such size
+def dfs(v, parent, graph, used, order):
+    used[v] = True
+    for u in graph[v]:
+        if not used[u]:
+            dfs(u, v, graph, used, order)
+    order.append(v)
 
+def plan_party(n, edges):
+    graph = [[] for _ in range(n)]
+    rgraph = [[] for _ in range(n)]
+    for a, b in edges:
+        a -= 1; b -= 1
+        graph[a].append(b)
+        rgraph[b].append(a)
 
-class Vertex:
-    def __init__(self, weight):
-        self.weight = weight
-        self.children = []
+    used = [False]*n
+    order = []
+    for v in range(n):
+        if not used[v]:
+            dfs(v, -1, graph, used, order)
 
+    comp = [-1]*n
+    label = 0
+    def rdfs(v, label):
+        comp[v] = label
+        for u in rgraph[v]:
+            if comp[u] == -1:
+                rdfs(u, label)
 
-def ReadTree():
-    size = int(input())
-    tree = [Vertex(w) for w in map(int, input().split())]
-    for i in range(1, size):
-        a, b = list(map(int, input().split()))
-        tree[a - 1].children.append(b - 1)
-        tree[b - 1].children.append(a - 1)
-    return tree
+    for v in reversed(order):
+        if comp[v] == -1:
+            rdfs(v, label)
+            label += 1
 
-
-def dfs(tree, vertex, parent):
-    for child in tree[vertex].children:
-        if child != parent:
-            dfs(tree, child, vertex)
-
-    # This is a template function for processing a tree using depth-first search.
-    # Write your code here.
-    # You may need to add more parameters to this function for child processing.
-
-
-def MaxWeightIndependentTreeSubset(tree):
-    size = len(tree)
-    if size == 0:
-        return 0
-    dfs(tree, 0, -1)
-    # You must decide what to return.
-    return 0
-
+    return label
 
 def main():
-    tree = ReadTree();
-    weight = MaxWeightIndependentTreeSubset(tree);
-    print(weight)
+    n, m = map(int, sys.stdin.readline().split())
+    edges = [tuple(map(int, sys.stdin.readline().split())) for _ in range(m)]
+    print(plan_party(n, edges))
 
-
-# This is to avoid stack overflow issues
-threading.Thread(target=main).start()
+if __name__ == "__main__":
+    main()
