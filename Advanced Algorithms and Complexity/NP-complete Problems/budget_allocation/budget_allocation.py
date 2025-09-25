@@ -1,17 +1,39 @@
 # python3
-n, m = list(map(int, stdin.readline().split()))
-A = []
-for i in range(n):
-  A += [list(map(int, stdin.readline().split()))]
-b = list(map(int, stdin.readline().split()))
 
-# This solution prints a simple satisfiable formula
-# and passes about half of the tests.
-# Change this function to solve the problem.
+import sys
+
 def printEquisatisfiableSatFormula():
-    print("3 2")
-    print("1 2 0")
-    print("-1 -2 0")
-    print("1 -2 0")
+    n, m = map(int, sys.stdin.readline().split())
+    clauses = []
 
-printEquisatisfiableSatFormula()
+    # 讀取每筆投資 (company, project)
+    investments = []
+    for _ in range(m):
+        company, project = map(int, sys.stdin.readline().split())
+        investments.append((company, project))
+
+    # 每個公司最多一筆
+    company_to_edges = {}
+    for i, (c, p) in enumerate(investments):
+        company_to_edges.setdefault(c, []).append(i + 1)
+
+    for edges in company_to_edges.values():
+        for i in range(len(edges)):
+            for j in range(i + 1, len(edges)):
+                clauses.append([-edges[i], -edges[j]])
+
+    # 每個 project 至少一筆
+    project_to_edges = {}
+    for i, (c, p) in enumerate(investments):
+        project_to_edges.setdefault(p, []).append(i + 1)
+
+    for edges in project_to_edges.values():
+        clauses.append(edges)
+
+    # 輸出 CNF
+    print(len(clauses), m)
+    for clause in clauses:
+        print(" ".join(map(str, clause)) + " 0")
+
+if __name__ == "__main__":
+    printEquisatisfiableSatFormula()
