@@ -1,45 +1,43 @@
 # python3
+import sys
+from itertools import combinations
+
+def var(i, j, n):
+    # 節點 i 在位置 j 的變數 index
+    return i * n + j + 1
 
 def printEquisatisfiableSatFormula():
-    n, m = map(int, input().split())
-    edges = [tuple(map(int, input().split())) for _ in range(m)]
-
-    # position[i][j] 表示 頂點 i 是否在路徑的第 j 個位置
-    def var(i, j):
-        return (i - 1) * n + j
+    n, m = map(int, sys.stdin.readline().split())
+    edges = [list(map(int, sys.stdin.readline().split())) for _ in range(m)]
+    adj = [[False]*n for _ in range(n)]
+    for u, v in edges:
+        adj[u-1][v-1] = True
+        adj[v-1][u-1] = True
 
     clauses = []
 
-    # 每個頂點至少要在一個位置
-    for i in range(1, n + 1):
-        clauses.append([var(i, j) for j in range(1, n + 1)])
+    # 每個位置必須有一個頂點
+    for j in range(n):
+        clauses.append([var(i,j,n) for i in range(n)])
+        for i1,i2 in combinations(range(n),2):
+            clauses.append([-var(i1,j,n), -var(i2,j,n)])
 
-    # 每個頂點最多在一個位置
-    for i in range(1, n + 1):
-        for j in range(1, n + 1):
-            for k in range(j + 1, n + 1):
-                clauses.append([-var(i, j), -var(i, k)])
+    # 每個頂點必須出現一次
+    for i in range(n):
+        clauses.append([var(i,j,n) for j in range(n)])
+        for j1,j2 in combinations(range(n),2):
+            clauses.append([-var(i,j1,n), -var(i,j2,n)])
 
-    # 每個位置只能放一個頂點
-    for j in range(1, n + 1):
-        for i in range(1, n + 1):
-            for k in range(i + 1, n + 1):
-                clauses.append([-var(i, j), -var(k, j)])
+    # 相鄰位置必須是有邊的
+    for j in range(n-1):
+        for i1 in range(n):
+            for i2 in range(n):
+                if not adj[i1][i2]:
+                    clauses.append([-var(i1,j,n), -var(i2,j+1,n)])
 
-    # 非鄰接頂點不可相鄰
-    adj = [[False] * (n + 1) for _ in range(n + 1)]
-    for u, v in edges:
-        adj[u][v] = adj[v][u] = True
-
-    for i in range(1, n + 1):
-        for k in range(1, n + 1):
-            if i != k and not adj[i][k]:
-                for j in range(1, n):
-                    clauses.append([-var(i, j), -var(k, j + 1)])
-
-    print(len(clauses), n * n)
+    print(len(clauses), n*n)
     for c in clauses:
-        print(" ".join(map(str, c)) + " 0")
+        print(" ".join(map(str,c)), "0")
 
 if __name__ == "__main__":
     printEquisatisfiableSatFormula()
