@@ -1,69 +1,68 @@
 import sys
 import random
-import hashlib
+import statistics
 
 class CountSketch:
-    def __init__(self, num_rows, num_buckets):
-        self.num_rows = num_rows
-        self.num_buckets = num_buckets
-        self.tables = [[0] * num_buckets for _ in range(num_rows)]
-        # 每一列有兩個 hash：一個決定桶子位置，一個決定正負號
-        self.hash_funcs = [self._make_hash(i) for i in range(num_rows)]
-        self.sign_funcs = [self._make_sign_hash(i + 1000) for i in range(num_rows)]
+    def __init__(self, d, w, seed=42):
+        random.seed(seed)
+        self.d = d
+        self.w = w
+        self.table = [[0] * w for _ in range(d)]
+        # 生成 hash 和 sign 的隨機參數
+        self.hash_a = [random.randint(1, 10**9) for _ in range(d)]
+        self.hash_b = [random.randint(0, 10**9) for _ in range(d)]
+        self.sign_a = [random.randint(1, 10**9) for _ in range(d)]
+        self.sign_b = [random.randint(0, 10**9) for _ in range(d)]
+        self.p = 10**9 + 7  # 大質數避免碰撞
 
-    def _make_hash(self, seed):
-        def h(x):
-            return int(hashlib.md5((str(x) + str(seed)).encode()).hexdigest(), 16) % self.num_buckets
-        return h
+    def _hash(self, row, x):
+        return ((self.hash_a[row] * x + self.hash_b[row]) % self.p) % self.w
 
-    def _make_sign_hash(self, seed):
-        def s(x):
-            return 1 if int(hashlib.md5((str(x) + str(seed)).encode()).hexdigest(), 16) % 2 == 0 else -1
-        return s
+    def _sign(self, row, x):
+        return 1 if ((self.sign_a[row] * x + self.sign_b[row]) % self.p) % 2 == 0 else -1
 
-    def update(self, key, value):
-        for r in range(self.num_rows):
-            idx = self.hash_funcs[r](key)
-            sign = self.sign_funcs[r](key)
-            self.tables[r][idx] += sign * value
+    def update(self, x, c=1):
+        for row in range(self.d):
+            j = self._hash(row, x)
+            s = self._sign(row, x)
+            self.table[row][j] += s * c
 
-    def estimate(self, key):
-        estimates = []
-        for r in range(self.num_rows):
-            idx = self.hash_funcs[r](key)
-            sign = self.sign_funcs[r](key)
-            estimates.append(sign * self.tables[r][idx])
-        # 取中位數避免 outlier
-        estimates.sort()
-        return estimates[len(estimates)//2]
-
+    def estimate(self, x):
+        ests = []
+        for row in range(self.d):
+            j = self._hash(row, x)
+            s = self._sign(row, x)
+            ests.append(self.table[row][j] * s)
+        return statistics.median(ests)
 
 def main():
     data = sys.stdin.read().strip().split()
-    n = int(data[0])   # number of updates
-    t = int(data[1])   # threshold
-
-    cs = CountSketch(num_rows=5, num_buckets=2003)
-
+    n = int(data[0])      # number of insertions
+    t = int(data[1])      # threshold
     idx = 2
+    cs = CountSketch(d=5, w=200)   # 可依課程要求調 d, w
+
+    # 第一組 (插入數據)
     for _ in range(n):
-        key, val = int(data[idx]), int(data[idx+1])
-        cs.update(key, val)
+        id_, value = int(data[idx]), int(data[idx+1])
         idx += 2
+        cs.update(id_, value)
 
+    # 第二組 (刪除數據)
     for _ in range(n):
-        key, val = int(data[idx]), int(data[idx+1])
-        cs.update(key, -val)
+        id_, value = int(data[idx]), int(data[idx+1])
         idx += 2
+        cs.update(id_, -value)
 
-    q = int(data[idx]); idx += 1
-    queries = list(map(int, data[idx:idx+q]))
+    # queries
+    num_q = int(data[idx]); idx += 1
+    queries = list(map(int, data[idx:idx+num_q]))
 
-    for key in queries:
-        if cs.estimate(key) >= t:
-            print("1 ", end="")
+    for q in queries:
+        if cs.estimate(q) >= t:
+            print("1", end=" ")
         else:
-            print("0 ", end="")
+            print("0", end=" ")
 
 if __name__ == "__main__":
     main()
