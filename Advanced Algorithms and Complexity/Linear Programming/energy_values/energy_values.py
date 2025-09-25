@@ -1,7 +1,6 @@
 # python3
 
 EPS = 1e-6
-PRECISION = 20
 
 class Equation:
     def __init__(self, a, b):
@@ -24,24 +23,34 @@ def ReadEquation():
     return Equation(a, b)
 
 def SelectPivotElement(a, used_rows, used_columns):
-    # This algorithm selects the first free element.
-    # You'll need to improve it to pass the problem.
-    pivot_element = Position(0, 0)
-    while used_rows[pivot_element.row]:
-        pivot_element.row += 1
-    while used_columns[pivot_element.column]:
-        pivot_element.column += 1
-    return pivot_element
+    n = len(a)
+    for col in range(n):
+        if used_columns[col]:
+            continue
+        for row in range(n):
+            if not used_rows[row] and abs(a[row][col]) > EPS:
+                return Position(col, row)
+    return None
 
 def SwapLines(a, b, used_rows, pivot_element):
     a[pivot_element.column], a[pivot_element.row] = a[pivot_element.row], a[pivot_element.column]
     b[pivot_element.column], b[pivot_element.row] = b[pivot_element.row], b[pivot_element.column]
-    used_rows[pivot_element.column], used_rows[pivot_element.row] = used_rows[pivot_element.row], used_rows[pivot_element.column]
-    pivot_element.row = pivot_element.column;
+    pivot_element.row = pivot_element.column
 
 def ProcessPivotElement(a, b, pivot_element):
-    # Write your code here
-    pass
+    n = len(a)
+    row = pivot_element.row
+    col = pivot_element.column
+    div = a[row][col]
+    for j in range(col, n):
+        a[row][j] /= div
+    b[row] /= div
+    for i in range(n):
+        if i != row:
+            factor = a[i][col]
+            for j in range(col, n):
+                a[i][j] -= factor * a[row][j]
+            b[i] -= factor * b[row]
 
 def MarkPivotElementUsed(pivot_element, used_rows, used_columns):
     used_rows[pivot_element.row] = True
@@ -51,24 +60,22 @@ def SolveEquation(equation):
     a = equation.a
     b = equation.b
     size = len(a)
-
     used_columns = [False] * size
     used_rows = [False] * size
     for step in range(size):
         pivot_element = SelectPivotElement(a, used_rows, used_columns)
+        if pivot_element is None:
+            break
         SwapLines(a, b, used_rows, pivot_element)
         ProcessPivotElement(a, b, pivot_element)
         MarkPivotElementUsed(pivot_element, used_rows, used_columns)
-
     return b
 
 def PrintColumn(column):
-    size = len(column)
-    for row in range(size):
-        print("%.20lf" % column[row])
+    for x in column:
+        print("%.20lf" % x)
 
 if __name__ == "__main__":
     equation = ReadEquation()
     solution = SolveEquation(equation)
     PrintColumn(solution)
-    exit(0)
