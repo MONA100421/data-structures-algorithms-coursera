@@ -1,12 +1,26 @@
-#Uses python3
-
+# Uses python3
 import sys
 
-
 def number_of_components(adj):
-    result = 0
-    #write your code here
-    return result
+    """Return the number of connected components in an undirected graph."""
+    n = len(adj)
+    visited = [False] * n
+    components = 0
+
+    for s in range(n):
+        if visited[s]:
+            continue
+        components += 1
+        # iterative DFS to avoid recursion limits
+        stack = [s]
+        visited[s] = True
+        while stack:
+            v = stack.pop()
+            for w in adj[v]:
+                if not visited[w]:
+                    visited[w] = True
+                    stack.append(w)
+    return components
 
 if __name__ == '__main__':
     input = sys.stdin.read()
