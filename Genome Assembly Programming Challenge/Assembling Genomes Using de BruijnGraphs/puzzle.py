@@ -1,3 +1,4 @@
+# use python3
 import sys
 
 def read_input():
