@@ -1,37 +1,45 @@
 # python3
 import sys
-from collections import deque
+sys.setrecursionlimit(10**7)
 
-def reschedule_exams(n, edges):
-    graph = [[] for _ in range(n)]
-    for a, b in edges:
-        a -= 1; b -= 1
-        graph[a].append(b)
-        graph[b].append(a)
+def read_input():
+    n,m=map(int,sys.stdin.readline().split())
+    colors=list(sys.stdin.readline().strip())
+    edges=[[] for _ in range(n)]
+    for _ in range(m):
+        u,v=map(int,sys.stdin.readline().split())
+        edges[u-1].append(v-1)
+        edges[v-1].append(u-1)
+    return n,m,colors,edges
 
-    color = [-1]*n
-    for start in range(n):
-        if color[start] == -1:
-            color[start] = 0
-            q = deque([start])
-            while q:
-                v = q.popleft()
-                for u in graph[v]:
-                    if color[u] == -1:
-                        color[u] = 1 - color[v]
-                        q.append(u)
-                    elif color[u] == color[v]:
-                        return None
-    return color
+def is_valid(u,c,new_colors,edges):
+    for v in edges[u]:
+        if new_colors[v]==c:
+            return False
+    return True
+
+def dfs(u,colors,edges,new_colors):
+    if u==len(colors): return True
+    if colors[u] in "RGB":
+        new_colors[u]=colors[u]
+        if is_valid(u,new_colors[u],new_colors,edges):
+            if dfs(u+1,colors,edges,new_colors): return True
+        return False
+    for c in "RGB":
+        if is_valid(u,c,new_colors,edges):
+            new_colors[u]=c
+            if dfs(u+1,colors,edges,new_colors): return True
+            new_colors[u]=""
+    return False
 
 def main():
-    n, m = map(int, sys.stdin.readline().split())
-    edges = [tuple(map(int, sys.stdin.readline().split())) for _ in range(m)]
-    result = reschedule_exams(n, edges)
-    if result is None:
-        print("IMPOSSIBLE")
+    n,m,colors,edges=read_input()
+    new_colors=[""]*n
+    ok=dfs(0,colors,edges,new_colors)
+    if not ok:
+        print("Impossible")
     else:
-        print(" ".join(str(x+1) for x in result))
+        print("".join(new_colors))
 
-if __name__ == "__main__":
+if __name__=="__main__":
     main()

@@ -2,67 +2,77 @@
 import sys
 sys.setrecursionlimit(10**7)
 
-def circuit_design(n, clauses):
-    graph = [[] for _ in range(2*n)]
-    for x, y in clauses:
-        def var_index(v):
-            if v > 0:
-                return 2*(v-1)
-            else:
-                return 2*(-v-1)+1
-        graph[var_index(-x)].append(var_index(y))
-        graph[var_index(-y)].append(var_index(x))
-
-    visited = [False]*(2*n)
-    order = []
-
-    def dfs(v):
-        visited[v] = True
-        for u in graph[v]:
-            if not visited[u]:
-                dfs(u)
-        order.append(v)
-
-    for v in range(2*n):
-        if not visited[v]:
-            dfs(v)
-
-    rgraph = [[] for _ in range(2*n)]
-    for v in range(2*n):
-        for u in graph[v]:
-            rgraph[u].append(v)
-
-    comp = [-1]*(2*n)
-
-    def rdfs(v, label):
-        comp[v] = label
-        for u in rgraph[v]:
-            if comp[u] == -1:
-                rdfs(u, label)
-
-    label = 0
-    for v in reversed(order):
-        if comp[v] == -1:
-            rdfs(v, label)
-            label += 1
-
-    assignment = [False]*n
-    for i in range(n):
-        if comp[2*i] == comp[2*i+1]:
-            return None
-        assignment[i] = comp[2*i] > comp[2*i+1]
-    return assignment
-
-
-def main():
+def read_input():
     n, m = map(int, sys.stdin.readline().split())
     clauses = [tuple(map(int, sys.stdin.readline().split())) for _ in range(m)]
-    assignment = circuit_design(n, clauses)
-    if assignment is None:
+    return n, m, clauses
+
+def var_index(x, n):
+    return 2*(abs(x)-1) ^ (0 if x > 0 else 1)
+
+def solve_2sat(n, m, clauses):
+    N = 2*n
+    graph = [[] for _ in range(N)]
+    rgraph = [[] for _ in range(N)]
+
+    def add_edge(u,v):
+        graph[u].append(v)
+        rgraph[v].append(u)
+
+    for a,b in clauses:
+        add_edge(var_index(-a,n), var_index(b,n))
+        add_edge(var_index(-b,n), var_index(a,n))
+
+    visited = [False]*N
+    order = []
+    for i in range(N):
+        if not visited[i]:
+            stack=[(i,0)]
+            while stack:
+                u,state=stack.pop()
+                if state==0:
+                    if visited[u]: continue
+                    visited[u]=True
+                    stack.append((u,1))
+                    for v in graph[u]:
+                        if not visited[v]:
+                            stack.append((v,0))
+                else:
+                    order.append(u)
+
+    comp=[-1]*N
+    label=0
+    for u in reversed(order):
+        if comp[u]==-1:
+            stack=[u]
+            comp[u]=label
+            while stack:
+                v=stack.pop()
+                for w in rgraph[v]:
+                    if comp[w]==-1:
+                        comp[w]=label
+                        stack.append(w)
+            label+=1
+
+    assignment=[False]*n
+    for i in range(n):
+        if comp[2*i]==comp[2*i+1]:
+            return False,[]
+        assignment[i]=comp[2*i]>comp[2*i+1]
+
+    result=[]
+    for i in range(n):
+        result.append(i+1 if assignment[i] else -(i+1))
+    return True,result
+
+def main():
+    n,m,clauses=read_input()
+    sat,assignment=solve_2sat(n,m,clauses)
+    if not sat:
         print("UNSATISFIABLE")
     else:
         print("SATISFIABLE")
-        print(" ".join([str(i+1 if val else -(i+1)) for i, val in enumerate(assignment)]))
+        print(" ".join(map(str,assignment)))
 
-if __name__ == "__main__":
+if __name__=="__main__":
     main()

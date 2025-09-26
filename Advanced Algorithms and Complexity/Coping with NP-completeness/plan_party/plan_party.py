@@ -2,46 +2,37 @@
 import sys
 sys.setrecursionlimit(10**7)
 
-def dfs(v, parent, graph, used, order):
-    used[v] = True
-    for u in graph[v]:
-        if not used[u]:
-            dfs(u, v, graph, used, order)
-    order.append(v)
-
-def plan_party(n, edges):
-    graph = [[] for _ in range(n)]
-    rgraph = [[] for _ in range(n)]
-    for a, b in edges:
-        a -= 1; b -= 1
-        graph[a].append(b)
-        rgraph[b].append(a)
-
-    used = [False]*n
-    order = []
-    for v in range(n):
-        if not used[v]:
-            dfs(v, -1, graph, used, order)
-
-    comp = [-1]*n
-    label = 0
-    def rdfs(v, label):
-        comp[v] = label
-        for u in rgraph[v]:
-            if comp[u] == -1:
-                rdfs(u, label)
-
-    for v in reversed(order):
-        if comp[v] == -1:
-            rdfs(v, label)
-            label += 1
-
-    return label
+def read_input():
+    n=int(sys.stdin.readline())
+    weights=list(map(int,sys.stdin.readline().split()))
+    edges=[[] for _ in range(n)]
+    for _ in range(n-1):
+        u,v=map(int,sys.stdin.readline().split())
+        edges[u-1].append(v-1)
+        edges[v-1].append(u-1)
+    return n,weights,edges
 
 def main():
-    n, m = map(int, sys.stdin.readline().split())
-    edges = [tuple(map(int, sys.stdin.readline().split())) for _ in range(m)]
-    print(plan_party(n, edges))
+    n,weights,edges=read_input()
+    dp=[[0,0] for _ in range(n)]
+    parent=[-1]*n
+    order=[]
+    stack=[0]
+    while stack:
+        u=stack.pop()
+        order.append(u)
+        for v in edges[u]:
+            if v!=parent[u]:
+                parent[v]=u
+                stack.append(v)
+    for u in reversed(order):
+        dp[u][0]=0
+        dp[u][1]=weights[u]
+        for v in edges[u]:
+            if v==parent[u]: continue
+            dp[u][0]+=max(dp[v][0],dp[v][1])
+            dp[u][1]+=dp[v][0]
+    print(max(dp[0][0],dp[0][1]))
 
-if __name__ == "__main__":
+if __name__=="__main__":
     main()
